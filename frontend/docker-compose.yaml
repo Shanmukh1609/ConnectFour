@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+      args:
+        # This passes the variable into your Dockerfile's ARG
+        - REACT_APP_API_URL=localhost:8080
+    ports:
+      - "3000:80"
+    environment:
+      # This helps React know it's in a development-like container
+      - NODE_ENV=development

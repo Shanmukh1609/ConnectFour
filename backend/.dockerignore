@@ -1,0 +1,17 @@
+# Ignore local binaries and object files
+main
+*.exe
+*.test
+bin/
+
+# Ignore dependencies (Docker will run go mod download)
+vendor/
+
+# Ignore sensitive files
+.env
+.git
+.gitignore
+
+# Ignore documentation and Docker metadata
+Dockerfile
+README.md

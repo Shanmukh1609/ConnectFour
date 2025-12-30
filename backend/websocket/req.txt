@@ -1,0 +1,181 @@
+
+websocket request has to do following things.
+- Need to upgrade the http connection between server and client to a websocket connection.
+  (This happens only when the request is made for the socket.)
+
+- Add each person to a pool.
+
+- Based on the room id, add the person to a seperate map of available online rooms.
+
+- When two person make a persistent connection to the server, send a message to start the game.
+
+- Write the game logic.
+
+// func HandleGameConnections(roomId string, ws *websocket.Conn, pName string) *models.GameRoom {
+
+// 	// verify whether the room exists or not.
+// 	fmt.Println("Handle Games")
+// 	roomMutex.Lock()
+
+// 	room, exists := ActiveRooms[roomId]
+// 	fmt.Println("nrjgnre")
+
+// 	var currentroom *models.GameRoom
+// 	if !exists {
+// 		// Create a Game room.
+// 		currentroom = &models.GameRoom{
+// 			Players:     make(map[*websocket.Conn]int, 0),
+// 			Ready:       false,
+// 			CurrentTurn: 1,
+// 			P1Name:      pName,
+// 			GameOver:    false,
+// 		}
+// 		//Write a JSON to player 1.
+
+// 		currentroom.CurrentTurn = 1
+// 		currentroom.Players[ws] = 1
+// 		ActiveRooms[roomId] = currentroom
+// 		fmt.Println("Player 1", pName)
+
+// 		ws.WriteJSON(map[string]string{"status": "waiting", "message": "Waiting for another player"})
+// 		roomMutex.Unlock()
+
+// 		return currentroom
+
+// 	} else {
+// 		//Bring Player 2.
+// 		current := ActiveRooms[roomId]
+// 		_, value := room.Players[ws]
+
+// 		if len(current.Players) != 2 && !current.Ready && !value {
+
+// 			room.Players[ws] = 2
+// 			room.GameState = controllers.CreateNewGame(room.P1Name, pName)
+// 			roomMutex.Unlock()
+// 			room.Ready = true
+// 			//Inform both the players that game has started.
+// 			fmt.Println("From Player 2", pName)
+
+// 			broadCastToRoom(map[string]string{"status": "Game Started!"}, room)
+// 			return room
+
+// 		} else if len(current.Players) != 2 && !current.Ready && value {
+// 			ws.WriteJSON(map[string]any{
+// 				"status":  "Already Filled",
+// 				"message": "You need other to start the game.",
+// 			})
+
+// 			roomMutex.Unlock()
+// 			return room
+
+// 		} else {
+// 			ws.WriteJSON(map[string]any{
+// 				"status":  "Already Filled",
+// 				"message": "The Game room is full",
+// 			})
+// 			roomMutex.Unlock()
+// 			return room
+// 		}
+// 	}
+
+// }
+
+// func broadCastToRoom(message interface{}, room *models.GameRoom) {
+
+// 	//We have tell players who are in the game, Where are we storing those details.
+// 	// It is possible to iterate over the keys,
+// 	for clients := range room.Players {
+// 		err := clients.WriteJSON(message)
+// 		if err != nil {
+// 			fmt.Println("Error,", err.Error())
+// 			return
+// 		}
+// 	}
+
+// }
+
+// func HandleMoves(ws *websocket.Conn, room *models.GameRoom) {
+// 	if !room.Ready && len(room.Players) == 2 {
+// 		broadCastToRoom(map[string]interface{}{"message": "Game is not started"}, room)
+// 		return
+// 	}
+// 	defer func() {
+// 		// Cleanup if player leaves
+// 		room.Mutex.Lock()
+// 		delete(room.Players, ws)
+// 		room.Mutex.Unlock()
+// 		ws.Close()
+// 	}()
+
+// 	for {
+// 		var move struct {
+// 			Column int `json:"column"`
+// 		}
+// 		if err := ws.ReadJSON(&move); err != nil {
+// 			break
+// 		}
+
+// 		// --- START OF CRITICAL SECTION ---
+// 		room.Mutex.Lock() // Nobody else can touch 'room' until we are done
+
+// 		playerNum := room.Players[ws]
+
+// 		// 1. Is it the right player?
+// 		// 2. Is the move valid? (using your ValidMove logic)
+// 		if room.CurrentTurn != playerNum {
+// 			//Specify the player.
+// 			broadCastToRoom(map[string]interface{}{"board": room.GameState.Board, "turn": 3 - playerNum, "message": "You can't play now"}, room)
+// 			// Do not return, just unlock and continue waiting
+
+// 		} else if !room.GameState.ValidMove(move.Column) {
+
+// 			broadCastToRoom(map[string]interface{}{"board": room.GameState.Board, "turn": 3 - playerNum, "message": "Invalid Move"}, room)
+
+// 		} else if room.GameOver {
+// 			return
+
+// 		} else {
+// 			// Valid Move
+// 			room.GameState.Assign(playerNum, move.Column)
+// 			room.CurrentTurn = 3 - playerNum // Toggle turn
+
+// 			// Broadcast the new state while still locked to ensure
+// 			// no moves happen during the broadcast
+// 			room.GameState.DisplayBoard()
+
+// 			if room.GameState.WinningMove(room.CurrentTurn) {
+// 				room.GameOver = true
+
+// 				for key, value := range room.Players {
+// 					if value == room.CurrentTurn {
+// 						key.WriteJSON(map[string]interface{}{"board": room.GameState.Board,
+// 							"status":  "COMPLETED",
+// 							"message": "You Won the game",
+// 							"winner":  true})
+// 					} else {
+// 						key.WriteJSON(map[string]interface{}{"board": room.GameState.Board,
+// 							"status":  "COMPLETED",
+// 							"message": "You lost the game",
+// 							"winner":  false})
+// 					}
+// 				}
+
+// 				for client := range room.Players {
+// 					client.Close()
+// 				}
+// 			} else {
+// 				broadCastToRoom(map[string]interface{}{
+// 					"board": room.GameState.Board,
+// 					"turn":  room.CurrentTurn,
+// 				}, room)
+// 			}
+// 		}
+
+// 		room.Mutex.Unlock() // Release the room for the next event.
+
+// 		// --- END OF CRITICAL SECTION ---
+// 	}
+// }
+
+// Players needs to be informed about the updates.
+// Who is the exact player needs to be known.

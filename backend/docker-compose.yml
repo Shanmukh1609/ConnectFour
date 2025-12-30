@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+
+  backend:
+      build:
+        context: .
+        dockerfile: Dockerfile
+      ports:
+        - "8080:8080"
+      environment:
+        # We use 'db' as the hostname because Docker links them by service name
+        DATABASE_URL: postgresql://myuser:1R7IkpU8GLD9tSTCfpPtBoQqd004olfF@dpg-d59lvhqli9vc73an3pog-a.oregon-postgres.render.com/game_db_kukr
