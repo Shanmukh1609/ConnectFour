@@ -30,7 +30,10 @@ const wsUrl = isLocal ? `ws://${apiBase}` : `wss://${apiBase}`;
       // 2. Call SetCookie with playerName as a query parameter
       const resp = await fetch(`${httpUrl}/setCookie?playerName=${encodeURIComponent(playerName)}`, {
         method: 'GET',
-        credentials: 'include' 
+        credentials: 'include',
+        headers:{
+          'Accept':'application/json'
+        }
       });
       
       if (!resp.ok) throw new Error("Failed to initialize session");

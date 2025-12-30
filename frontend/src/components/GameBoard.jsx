@@ -193,7 +193,13 @@ console.log("Current User ID from Cookie:", userIdFromCookie);
   const handleViewLeaderboard = async () => {
     try {
       // 1. Call the Go API using the current player's name
-      const response = await fetch(`${httpUrl}/leaderBoard?playerName=${encodeURIComponent(playerName)}`);
+      const response = await fetch(`${httpUrl}/leaderBoard?playerName=${encodeURIComponent(playerName)}`,{
+    method: 'GET',
+    credentials: 'include', // This tells the browser to accept the cookie
+    headers: {
+        'Accept': 'application/json',
+    }
+      });
       if (!response.ok) throw new Error("Failed to fetch leaderboard");
       
       const data = await response.json();
