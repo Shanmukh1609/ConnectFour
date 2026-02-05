@@ -10,7 +10,7 @@ export const GameProvider = ({ children }) => {
   const socketRef = useRef(null);
 
   const apiBase = process.env.REACT_APP_API_URL;
-
+console.log("api base is ", apiBase)
 // Check if we are running locally or on the web
 const isLocal = apiBase.includes('localhost');
 
